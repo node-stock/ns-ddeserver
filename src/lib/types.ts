@@ -62,3 +62,12 @@ export enum RssStock {
   ask_vol9 = '最良買気配数量９',
   ask_vol10 = '最良買気配数量１０'
 }
+
+/**
+ * 基本订阅对象
+ */
+export const BasePlan = [
+  RssStock.close, RssStock.open, RssStock.high, RssStock.low,
+  RssStock.volume, RssStock.over_vol, RssStock.under_vol,
+  RssStock.bid1, RssStock.bid_vol1, RssStock.ask1, RssStock.ask_vol1
+];
