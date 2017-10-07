@@ -9,6 +9,9 @@ const subscribeDde = () => {
   const server: DdeServer = <DdeServer>{};
   const startDde = new Scheduler('55 8 * * *');
   startDde.invok((startServ: DdeServer) => {
+    if (!Util.isTradeDate(new Date())) {
+      return;
+    }
 
     Log.system.info('启动DDE数据订阅服务');
     try {
