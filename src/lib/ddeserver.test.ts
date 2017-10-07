@@ -6,9 +6,10 @@ import { Log } from 'ns-common';
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 
 const testStart = async (done: any) => {
+  let server: DdeServer;
   try {
 
-    const server = new DdeServer({ symbols: ['6553'], items: [RssStock.volume, RssStock.close] });
+    server = new DdeServer({ symbols: ['6553'], items: [RssStock.volume, RssStock.close] });
 
     // 等待6秒
     await new Promise(resolve => setTimeout(resolve, 6000));
@@ -28,7 +29,7 @@ const testStart = async (done: any) => {
 describe('DDE服务测试', () => {
   it('测试是否启动成功', function (done) {
     this.timeout(20000);
-    done(); // testStart(done);
+    testStart(done); // done();
   });
 });
 

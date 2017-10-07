@@ -1,6 +1,6 @@
 {
   "name": "ns-ddeserver",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "node-stock ddeserver module",
   "repository": {
     "type": "git",
@@ -11,6 +11,7 @@
   "typings": "dist/index.d.ts",
   "scripts": {
     "rm": "rimraf dist",
+    "start": "node dist/index.js",
     "dev": "cp config/config.dev.json config/config.json",
     "tsc": "npm run rm && tsc -p tsconfig.development.json",
     "tslint": "tslint --project ./tslint.json",
@@ -19,7 +20,7 @@
   },
   "dependencies": {
     "mysql2": "^1.4.2",
-    "ns-common": "0.0.10",
+    "ns-common": "0.0.11",
     "ns-store": "0.0.13",
     "realstream": "0.0.4",
     "ts-dde": "^0.1.8"
