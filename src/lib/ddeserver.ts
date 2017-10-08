@@ -1,10 +1,12 @@
 import { Client, DdeType } from 'ts-dde';
 import { Store as db } from 'ns-store';
-import { Log } from 'ns-common';
+import { Log, Util, Scheduler } from 'ns-common';
 import { PubNub } from 'realstream';
+import { BasePlan } from './types';
 
 const config = require('../../config/config');
 db.init(config.store);
+Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 const pubnub = new PubNub(config.pubnub);
 /**
   * @class
@@ -57,5 +59,71 @@ export class DdeServer {
     Log.system.info(`关闭dde服务:${this.conn.service()}。`);
     this.conn.stopAdvise();
     this.conn.dispose();
+  }
+}
+
+export class DdeStream {
+  static subscribeDde = () => {
+    Log.system.info('subscribeDde，dde服务订阅方法[启动]');
+
+    // 如果为交易时间，直接启动dde服务
+    if (Util.isTradeTime()) {
+      Log.system.info('当前为交易时间，直接启动dde服务');
+
+      const startServ = new DdeServer({
+        symbols: ['6553', '6664'],
+        items: BasePlan
+      });
+
+      // 注册取消订阅事件
+      DdeStream.unsubscribeDde(startServ);
+    } else { // 否则定时启动dde服务
+      Log.system.info('当前为非交易时间，注册定时启动dde服务程序');
+
+      const server: DdeServer = <DdeServer>{};
+      const startDde = new Scheduler('55 8 * * *');
+      startDde.invok((startServ: DdeServer) => {
+        if (!Util.isTradeDate(new Date())) {
+          Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
+          return;
+        }
+
+        Log.system.info('启动定时DDE数据订阅服务');
+        try {
+          startServ = new DdeServer({
+            symbols: ['6553', '6664'],
+            items: BasePlan
+          });
+
+          // 注册取消订阅事件
+          DdeStream.unsubscribeDde(startServ);
+        } catch (err) {
+          if (err.Code === 16394) {
+            Log.system.error('与服务器连接失败');
+            return;
+          }
+          Log.system.error(err.stack)
+          if (startServ.isConnected()) {
+            Log.system.info('发送异常，关闭DDE数据订阅服务');
+            startServ.close();
+          }
+        }
+      }, server);
+    }
+    Log.system.info('subscribeDde，dde服务订阅方法[终了]');
+  };
+
+  static unsubscribeDde = (serv: DdeServer) => {
+    Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
+    // 资源释放
+    const stopDde = new Scheduler('31 15 * * *');
+    stopDde.invok((stopServ: DdeServer) => {
+      if (stopServ.isConnected()) {
+        Log.system.info('关闭DDE数据订阅服务');
+        stopServ.close();
+      }
+      stopDde.reminder.cancel()
+    }, serv)
+    Log.system.info('unsubscribeDde，dde服务退订方法[终了]');
   }
 }
