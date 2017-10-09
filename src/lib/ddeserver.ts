@@ -84,44 +84,40 @@ export class DdeStream {
         symbols: ['6553', '6664'],
         items: BasePlan
       });
+    }
+    Log.system.info('注册定时启动dde服务程序');
 
-      // 注册取消订阅事件
-      DdeStream.unsubscribeDde(startServ);
-    } else { // 否则定时启动dde服务
-      Log.system.info('当前为非交易时间，注册定时启动dde服务程序');
+    const server: DdeServer = <DdeServer>{};
+    const startDde = new Scheduler('55 8 * * *');
+    startDde.invok((startServ: DdeServer) => {
+      if (!Util.isTradeDate(new Date())) {
+        Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
+        return;
+      }
 
-      const server: DdeServer = <DdeServer>{};
-      const startDde = new Scheduler('55 8 * * *');
-      startDde.invok((startServ: DdeServer) => {
-        if (!Util.isTradeDate(new Date())) {
-          Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
+      Log.system.info('启动定时DDE数据订阅服务');
+      try {
+        startServ = new DdeServer({
+          symbols: ['6553', '6664'],
+          items: BasePlan
+        });
+
+        // 注册取消订阅事件
+        DdeStream.unsubscribeDde(startServ);
+      } catch (err) {
+        if (err.Code === 16394) {
+          Log.system.error('与服务器连接失败');
           return;
         }
-
-        Log.system.info('启动定时DDE数据订阅服务');
-        try {
-          startServ = new DdeServer({
-            symbols: ['6553', '6664'],
-            items: BasePlan
-          });
-
-          // 注册取消订阅事件
-          DdeStream.unsubscribeDde(startServ);
-        } catch (err) {
-          if (err.Code === 16394) {
-            Log.system.error('与服务器连接失败');
-            return;
-          }
-          Log.system.error(err.stack)
-          if (startServ.isConnected()) {
-            Log.system.info('发送异常，关闭DDE数据订阅服务');
-            startServ.close();
-          }
+        Log.system.error(err.stack)
+        if (startServ.isConnected()) {
+          Log.system.info('发送异常，关闭DDE数据订阅服务');
+          startServ.close();
         }
-      }, server);
-    }
+      }
+    }, server);
     Log.system.info('subscribeDde，dde服务订阅方法[终了]');
-  };
+  }
 
   static unsubscribeDde = (serv: DdeServer) => {
     Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
