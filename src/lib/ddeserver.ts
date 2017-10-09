@@ -3,6 +3,7 @@ import { Store as db } from 'ns-store';
 import { Log, Util, Scheduler } from 'ns-common';
 import { PubNub } from 'realstream';
 import { BasePlan } from './types';
+import * as childProcess from 'child_process';
 
 const config = require('../../config/config');
 db.init(config.store);
@@ -28,6 +29,15 @@ export class DdeServer {
     this.conn.connect();
     if (!this.conn.isConnected()) {
       Log.system.error(`服务:${this.conn.service()},连接失败！`);
+      Log.system.info('自动登录乐天客户端...');
+      const workProcess = childProcess.exec('node rakutenlogin.js', {
+        cwd: __dirname
+      }, (error, stdout, stderr) => {
+        if (error) {
+          Log.system.error(`自动登录乐天客户端失败: ${error.stack}`);
+        }
+        workProcess.kill();
+      })
     } else {
       Log.system.info(`服务:${this.conn.service()},连接成功！`);
     }

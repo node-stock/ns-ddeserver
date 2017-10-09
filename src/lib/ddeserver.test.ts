@@ -6,6 +6,7 @@ import { Log } from 'ns-common';
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 
 const testStart = async (done: any) => {
+
   let server: DdeServer;
   try {
 

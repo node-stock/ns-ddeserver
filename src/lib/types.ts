@@ -21,6 +21,8 @@ export enum RssStock {
   vwap = '出来高加重平均',
   over_vol = 'OVER気配数量',
   under_vol = 'UNDER気配数量',
+  bid_ord_vol = '売成行数量',
+  ask_ord_vol = '買成行数量',
   bid1 = '最良売気配値１',
   bid2 = '最良売気配値２',
   bid3 = '最良売気配値３',
@@ -67,7 +69,7 @@ export enum RssStock {
  * 基本订阅对象
  */
 export const BasePlan = [
-  RssStock.close, RssStock.open, RssStock.high, RssStock.low,
-  RssStock.volume, RssStock.over_vol, RssStock.under_vol,
+  RssStock.close, RssStock.open, RssStock.high, RssStock.low, RssStock.volume,
+  RssStock.over_vol, RssStock.under_vol, RssStock.bid_ord_vol, RssStock.ask_ord_vol,
   RssStock.bid1, RssStock.bid_vol1, RssStock.ask1, RssStock.ask_vol1
 ];
