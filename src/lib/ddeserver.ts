@@ -3,7 +3,6 @@ import { Store as db } from 'ns-store';
 import { Log, Util, Scheduler } from 'ns-common';
 import { PubNub } from 'realstream';
 import { BasePlan } from './types';
-import * as childProcess from 'child_process';
 
 const config = require('../../config/config');
 db.init(config.store);
@@ -24,32 +23,26 @@ export class DdeServer {
     for (const symbol of opt.symbols) {
       this.service.RSS[symbol + '.T'] = opt.items;
     }
-
+    this._connect();
+  }
+  private _connect() {
     this.conn = new Client(this.service);
     this.conn.connect();
+    // 未连接上
     if (!this.conn.isConnected()) {
-      Log.system.error(`服务:${this.conn.service()},连接失败！`);
-      Log.system.info('自动登录乐天客户端...');
-      const workProcess = childProcess.exec('node rakutenlogin.js', {
-        cwd: __dirname
-      }, (error, stdout, stderr) => {
-        if (error) {
-          Log.system.error(`自动登录乐天客户端失败: ${error.stack}`);
-        }
-        workProcess.kill();
-      })
-    } else {
-      Log.system.info(`服务:${this.conn.service()},连接成功！`);
+      Log.system.error('启动dde服务失败！');
+      return;
     }
+    Log.system.info(`dde主题:${this.conn.topic()},连接成功！`);
     // 断开事件
-    this.conn.on('disconnected', () => {
-      Log.system.info(`服务:${this.conn.service()},主题:${this.conn.topic()},断开连接！`);
+    this.conn.on('disconnected', (service: string, topic: string) => {
+      Log.system.info(`服务:${service},主题:${topic},断开连接！`);
     });
     // 订阅事件
     this.conn.on('advise', (service: string, topic: string, item: string, text: string) => {
       try {
         const ddeMsg = { service, topic, item, text: text.trim().replace(/\0/g, '') };
-        Log.system.info(ddeMsg);
+        console.log(ddeMsg);
         pubnub.publish('stock', ddeMsg);
         // 写入数据库
         db.model.Dde.upsert(ddeMsg);
@@ -66,41 +59,44 @@ export class DdeServer {
   }
 
   close() {
-    Log.system.info(`关闭dde服务:${this.conn.service()}。`);
+    Log.system.info(`关闭dde主题:${this.conn.topic()}。`);
     this.conn.stopAdvise();
     this.conn.dispose();
   }
 }
 
 export class DdeStream {
-  static subscribeDde = () => {
+
+  static _startServ = () => {
+    return new DdeServer({
+      symbols: ['6553', '6664'],
+      items: BasePlan
+    });
+  }
+
+  static subscribeDde = async () => {
     Log.system.info('subscribeDde，dde服务订阅方法[启动]');
 
     // 如果为交易时间，直接启动dde服务
     if (Util.isTradeTime()) {
       Log.system.info('当前为交易时间，直接启动dde服务');
-
-      const startServ = new DdeServer({
-        symbols: ['6553', '6664'],
-        items: BasePlan
-      });
+      const startServ = DdeStream._startServ();
+      // 注册取消订阅事件
+      DdeStream.unsubscribeDde(startServ);
     }
     Log.system.info('注册定时启动dde服务程序');
 
     const server: DdeServer = <DdeServer>{};
-    const startDde = new Scheduler('55 8 * * *');
+    const startDde = new Scheduler('55 8 * * *'); // */3 * * * * *
     startDde.invok((startServ: DdeServer) => {
       if (!Util.isTradeDate(new Date())) {
         Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
         return;
       }
 
-      Log.system.info('启动定时DDE数据订阅服务');
+      Log.system.info('启动定时DDE数据[订阅服务]');
       try {
-        startServ = new DdeServer({
-          symbols: ['6553', '6664'],
-          items: BasePlan
-        });
+        startServ = DdeStream._startServ();
 
         // 注册取消订阅事件
         DdeStream.unsubscribeDde(startServ);
@@ -122,14 +118,15 @@ export class DdeStream {
   static unsubscribeDde = (serv: DdeServer) => {
     Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
     // 资源释放
-    const stopDde = new Scheduler('31 15 * * *');
+    const stopDde = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
     stopDde.invok((stopServ: DdeServer) => {
+      Log.system.info('启动定时DDE数据[退订服务]');
       if (stopServ.isConnected()) {
-        Log.system.info('关闭DDE数据订阅服务');
         stopServ.close();
       }
+      // 删除定时任务
       stopDde.reminder.cancel()
-    }, serv)
+    }, serv);
     Log.system.info('unsubscribeDde，dde服务退订方法[终了]');
   }
 }
