@@ -87,7 +87,7 @@ export class DdeStream {
     Log.system.info('注册定时启动dde服务程序');
 
     const server: DdeServer = <DdeServer>{};
-    const startDde = new Scheduler('*/3 * * * * *'); // 55 8 * * *
+    const startDde = new Scheduler('55 8 * * *'); // */3 * * * * *
     startDde.invok((startServ: DdeServer) => {
       if (!Util.isTradeDate(new Date())) {
         Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
@@ -118,7 +118,7 @@ export class DdeStream {
   static unsubscribeDde = (serv: DdeServer) => {
     Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
     // 资源释放
-    const stopDde = new Scheduler('*/2 * * * * *'); // '01 15 * * *'
+    const stopDde = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
     stopDde.invok((stopServ: DdeServer) => {
       Log.system.info('启动定时DDE数据[退订服务]');
       if (stopServ.isConnected()) {
