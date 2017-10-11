@@ -18,9 +18,5 @@
   "pubnub": {
     "publishKey": "pub-c-4e57d322-4d66-470d-a4e0-feb12c68d816",
     "subscribeKey": "sub-c-39a094ea-a1b7-11e7-8e6b-ae1a713ba7dc"
-  },
-  "account": {
-    "id": "idxxx",
-    "pass": "paxxxx"
   }
 }
