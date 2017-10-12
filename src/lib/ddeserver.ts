@@ -3,8 +3,10 @@ import { Store as db } from 'ns-store';
 import { Log, Util, Scheduler } from 'ns-common';
 import { PubNub } from 'realstream';
 import { BasePlan } from './types';
+import { MarketSpeed, InputType } from 'rakuten-auto-login';
 
 const config = require('../../config/config');
+const account = config.account;
 db.init(config.store);
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 const pubnub = new PubNub(config.pubnub);
@@ -125,8 +127,37 @@ export class DdeStream {
         stopServ.close();
       }
       // 删除定时任务
-      stopDde.reminder.cancel()
+      stopDde.reminder.cancel();
     }, serv);
     Log.system.info('unsubscribeDde，dde服务退订方法[终了]');
+  }
+
+  /**
+   * 注册定时自动登录事件
+   */
+  static regAutoLogin() {
+    // 每天8点执行自动登录
+    const stopDde = new Scheduler('01 8 * * *'); // '01 8 * * *'
+    stopDde.invok((stopServ: DdeServer) => {
+      if (!Util.isTradeDate(new Date())) {
+        return;
+      }
+      Log.system.info('自动登录乐天客户端...');
+
+      const input: InputType = {
+        user: account.id,
+        password: account.pass,
+        version: account.version,
+        dir: account.dir,
+        filename: account.filename
+      }
+      const marketSpeed = new MarketSpeed(input);
+      marketSpeed.login().then(res => {
+        Log.system.info(`自动登录乐天客户端成功`);
+      }).catch((error) => {
+        Log.system.error(`自动登录乐天客户端失败: ${error.message}`);
+      });
+      stopDde.reminder.cancel()
+    });
   }
 }
