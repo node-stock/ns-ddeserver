@@ -3,14 +3,15 @@ import { RssStock } from './types';
 import * as assert from 'power-assert';
 import { Log } from 'ns-common';
 
+const config = require('config');
+
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 
 const testStart = async (done: any) => {
 
   let server: DdeServer;
   try {
-
-    server = new DdeServer({ symbols: ['6553'], items: [RssStock.volume, RssStock.close] });
+    server = new DdeServer({ symbols: config.ddeserv.symbols, items: [RssStock.volume, RssStock.close] });
 
     // 等待6秒
     await new Promise(resolve => setTimeout(resolve, 6000));
@@ -18,10 +19,12 @@ const testStart = async (done: any) => {
   } catch (err) {
     if (err.Code === 16394) {
       Log.system.info('与服务器连接失败');
+      assert(false);
       done();
       return;
     }
     Log.system.error(err.stack)
+    assert(true);
     done();
   }
   done();

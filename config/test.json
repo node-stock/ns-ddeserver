@@ -1,19 +1,12 @@
 {
   "store": {
-    "database": "__",
-    "dialect": "sqlite",
+    "host": "127.0.0.1",
+    "database": "test",
+    "dialect": "mysql",
     "username": "root",
-    "password": "",
-    "storage": ":memory:",
+    "timezone": "+09:00",
     "operatorsAliases": false,
     "logging": false
-  },
-  "prinub": {
-    "publishKey": "pub-c-4e57d322-4d66-470d-a4e0-feb12c68d816",
-    "subscribeKey": "sub-c-39a094ea-a1b7-11e7-8e6b-ae1a713ba7dc",
-    "secretKey": "sec-c-MDI0MmJkZDMtYzc0YS00NTYwLWIwZDctZWE1NjllMzVlM2Ix",
-    "salt": "xxxxx",
-    "ttl": 1
   },
   "pubnub": {
     "publishKey": "pub-c-4e57d322-4d66-470d-a4e0-feb12c68d816",
@@ -25,5 +18,8 @@
     "version": "15.7",
     "dir": "C:/Program Files (x86)/MarketSpeed/MarketSpeed",
     "filename": "MarketSpeed.exe"
+  },
+  "ddeserv": {
+    "symbols": ["6553", "6664"]
   }
 }

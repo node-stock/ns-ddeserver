@@ -1,4 +1,4 @@
-import { DdeStream } from './lib/ddeserver';
+import { DdeStream } from './lib/ddestream';
 
 // 启动Dde服务
 DdeStream.subscribeDde();
