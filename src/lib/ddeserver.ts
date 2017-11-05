@@ -1,13 +1,10 @@
 import { Client, DdeType } from 'ts-dde';
 import { Store as db } from 'ns-store';
-import { Log, Util, Scheduler } from 'ns-common';
+import { Log } from 'ns-common';
 import { PubNub } from 'realstream';
-import { BasePlan } from './types';
-import { MarketSpeed, InputType } from 'rakuten-auto-login';
+import * as moment from 'moment';
 
-const config = require('../../config/config');
-const account = config.account;
-db.init(config.store);
+const config = require('config');
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 const pubnub = new PubNub(config.pubnub);
 /**
@@ -21,6 +18,7 @@ export class DdeServer {
   conn: Client;
 
   constructor(opt: { symbols: string[], items: string[] }) {
+    db.init(config.store);
     this.service = <DdeType>{ RSS: {} };
     for (const symbol of opt.symbols) {
       this.service.RSS[symbol + '.T'] = opt.items;
@@ -43,11 +41,17 @@ export class DdeServer {
     // 订阅事件
     this.conn.on('advise', (service: string, topic: string, item: string, text: string) => {
       try {
-        const ddeMsg = { service, topic, item, text: text.trim().replace(/\0/g, '') };
+        const ddeMsg = {
+          service, topic, item,
+          text: text.trim().replace(/\0/g, ''),
+          date: moment().format('YYYY-MM-DD')
+        };
         console.log(ddeMsg);
-        pubnub.publish('stock', ddeMsg);
-        // 写入数据库
-        db.model.Dde.upsert(ddeMsg);
+        if (ddeMsg.text) {
+          // pubnub.publish('stock', ddeMsg);
+          // 写入数据库
+          db.model.Dde.upsert(ddeMsg);
+        }
       } catch (err) {
         Log.system.error('订阅事件处理出错：', err.stack);
       }
@@ -62,102 +66,8 @@ export class DdeServer {
 
   close() {
     Log.system.info(`关闭dde主题:${this.conn.topic()}。`);
+    db.close();
     this.conn.stopAdvise();
     this.conn.dispose();
-  }
-}
-
-export class DdeStream {
-
-  static _startServ = () => {
-    return new DdeServer({
-      symbols: ['6553', '6664'],
-      items: BasePlan
-    });
-  }
-
-  static subscribeDde = async () => {
-    Log.system.info('subscribeDde，dde服务订阅方法[启动]');
-
-    // 如果为交易时间，直接启动dde服务
-    if (Util.isTradeTime()) {
-      Log.system.info('当前为交易时间，直接启动dde服务');
-      const startServ = DdeStream._startServ();
-      // 注册取消订阅事件
-      DdeStream.unsubscribeDde(startServ);
-    }
-    Log.system.info('注册定时启动dde服务程序');
-
-    const server: DdeServer = <DdeServer>{};
-    const startDde = new Scheduler('55 8 * * *'); // */3 * * * * *
-    startDde.invok((startServ: DdeServer) => {
-      if (!Util.isTradeDate(new Date())) {
-        Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
-        return;
-      }
-
-      Log.system.info('启动定时DDE数据[订阅服务]');
-      try {
-        startServ = DdeStream._startServ();
-
-        // 注册取消订阅事件
-        DdeStream.unsubscribeDde(startServ);
-      } catch (err) {
-        if (err.Code === 16394) {
-          Log.system.error('与服务器连接失败');
-          return;
-        }
-        Log.system.error(err.stack)
-        if (startServ.isConnected()) {
-          Log.system.info('发送异常，关闭DDE数据订阅服务');
-          startServ.close();
-        }
-      }
-    }, server);
-    Log.system.info('subscribeDde，dde服务订阅方法[终了]');
-  }
-
-  static unsubscribeDde = (serv: DdeServer) => {
-    Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
-    // 资源释放
-    const stopDde = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
-    stopDde.invok((stopServ: DdeServer) => {
-      Log.system.info('启动定时DDE数据[退订服务]');
-      if (stopServ.isConnected()) {
-        stopServ.close();
-      }
-      // 删除定时任务
-      stopDde.reminder.cancel();
-    }, serv);
-    Log.system.info('unsubscribeDde，dde服务退订方法[终了]');
-  }
-
-  /**
-   * 注册定时自动登录事件
-   */
-  static regAutoLogin() {
-    // 每天8点执行自动登录
-    const stopDde = new Scheduler('01 8 * * *'); // '01 8 * * *'
-    stopDde.invok((stopServ: DdeServer) => {
-      if (!Util.isTradeDate(new Date())) {
-        return;
-      }
-      Log.system.info('自动登录乐天客户端...');
-
-      const input: InputType = {
-        user: account.id,
-        password: account.pass,
-        version: account.version,
-        dir: account.dir,
-        filename: account.filename
-      }
-      const marketSpeed = new MarketSpeed(input);
-      marketSpeed.login().then(res => {
-        Log.system.info(`自动登录乐天客户端成功`);
-      }).catch((error) => {
-        Log.system.error(`自动登录乐天客户端失败: ${error.message}`);
-      });
-      stopDde.reminder.cancel()
-    });
   }
 }
