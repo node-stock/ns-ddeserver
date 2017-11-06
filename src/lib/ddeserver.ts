@@ -2,6 +2,7 @@ import { Client, DdeType } from 'ts-dde';
 import { Store as db } from 'ns-store';
 import { Log } from 'ns-common';
 import { PubNub } from 'realstream';
+import * as numeral from 'numeral';
 import * as moment from 'moment';
 
 const config = require('config');
@@ -47,7 +48,7 @@ export class DdeServer {
           date: moment().format('YYYY-MM-DD')
         };
         console.log(ddeMsg);
-        if (ddeMsg.text) {
+        if (ddeMsg.text && numeral(ddeMsg.text).value() !== 0) {
           // pubnub.publish('stock', ddeMsg);
           // 写入数据库
           db.model.Dde.upsert(ddeMsg);
