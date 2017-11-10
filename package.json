@@ -1,6 +1,6 @@
 {
   "name": "ns-ddeserver",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "node-stock ddeserver app",
   "repository": {
     "type": "git",
@@ -21,10 +21,11 @@
     "moment": "^2.19.1",
     "mysql2": "^1.4.2",
     "ns-common": "0.0.11",
-    "ns-store": "0.0.24",
+    "ns-store": "0.0.27",
     "numeral": "^2.0.6",
     "rakuten-auto-login": "^0.1.1",
     "realstream": "0.0.4",
+    "toml": "^2.3.3",
     "ts-dde": "^0.1.8"
   },
   "devDependencies": {

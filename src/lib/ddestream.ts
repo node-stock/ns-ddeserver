@@ -90,9 +90,9 @@ export class DdeStream {
       const marketSpeed = new MarketSpeed({
         user: config.account.id,
         password: config.account.pass,
-        version: config.account.version,
-        dir: config.account.dir,
-        filename: config.account.filename
+        version: config.marketspeed.version,
+        dir: config.marketspeed.dir,
+        filename: config.marketspeed.filename
       });
       marketSpeed.login().then(res => {
         Log.system.info(`自动登录乐天客户端成功`);
