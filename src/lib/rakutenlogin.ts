@@ -1,12 +1,12 @@
 import { MarketSpeed, InputType } from 'rakuten-auto-login';
-const account = require('../../config/config.json').account;
+const config = require('config');
 
 const input: InputType = {
-  user: account.id,
-  password: account.pass,
-  version: account.version,
-  dir: account.dir,
-  filename: account.filename
+  user: config.account.id,
+  password: config.account.pass,
+  version: config.marketspeed.version,
+  dir: config.marketspeed.dir,
+  filename: config.marketspeed.filename
 }
 const marketSpeed = new MarketSpeed(input);
 marketSpeed.login().then(res => console.log('marketSpeed login:', res));
