@@ -12,7 +12,7 @@ const testStart = async (done: any) => {
   let server: DdeServer;
   try {
     server = new DdeServer({ symbols: config.ddeserv.symbols, items: [RssStock.volume, RssStock.close] });
-
+    server.connect();
     // 等待6秒
     await new Promise(resolve => setTimeout(resolve, 6000));
     server.close();
@@ -23,7 +23,7 @@ const testStart = async (done: any) => {
       done();
       return;
     }
-    Log.system.error(err.stack)
+    Log.system.error(err.stack);
     assert(true);
     done();
   }

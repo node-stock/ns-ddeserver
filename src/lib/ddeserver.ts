@@ -19,14 +19,13 @@ export class DdeServer {
   conn: Client;
 
   constructor(opt: { symbols: string[], items: string[] }) {
-    db.init(config.store);
     this.service = <DdeType>{ RSS: {} };
     for (const symbol of opt.symbols) {
       this.service.RSS[symbol + '.T'] = opt.items;
     }
-    this._connect();
   }
-  private _connect() {
+  connect() {
+    db.init(config.store);
     this.conn = new Client(this.service);
     this.conn.connect();
     // 未连接上
