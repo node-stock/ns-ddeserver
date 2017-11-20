@@ -7,31 +7,32 @@ import * as assert from 'power-assert';
 const config = require('config');
 
 export class DdeStream {
+  ddeServ: DdeServer;
 
-  static _startServ = () => {
+  constructor() {
     assert(config, 'config required.');
     assert(config.ddeserv, 'config.ddeserv required.');
-    return new DdeServer({
+    this.ddeServ = new DdeServer({
       symbols: config.ddeserv.symbols,
       items: BasePlan
     });
+
   }
 
-  static subscribeDde = async () => {
+  async start() {
     Log.system.info('subscribeDde，dde服务订阅方法[启动]');
 
     // 如果为交易时间，直接启动dde服务
     if (Util.isTradeTime()) {
       Log.system.info('当前为交易时间，直接启动dde服务');
-      const startServ = DdeStream._startServ();
+      this.ddeServ.connect();
       // 注册取消订阅事件
-      DdeStream.unsubscribeDde(startServ);
+      this.stop();
     }
     Log.system.info('注册定时启动dde服务程序');
 
-    const server: DdeServer = <DdeServer>{};
-    const startDde = new Scheduler('55 8 * * *'); // */3 * * * * *
-    startDde.invok((startServ: DdeServer) => {
+    const startTask = new Scheduler('55 8 * * *'); // */3 * * * * *
+    startTask.invok((startServ: DdeServer) => {
       if (!Util.isTradeDate(new Date())) {
         Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
         return;
@@ -39,10 +40,9 @@ export class DdeStream {
 
       Log.system.info('启动定时DDE数据[订阅服务]');
       try {
-        startServ = DdeStream._startServ();
-
+        this.ddeServ.connect();
         // 注册取消订阅事件
-        DdeStream.unsubscribeDde(startServ);
+        this.stop();
       } catch (err) {
         if (err.Code === 16394) {
           Log.system.error('与服务器连接失败');
@@ -54,35 +54,33 @@ export class DdeStream {
           startServ.close();
         }
       }
-    }, server);
-    Log.system.info('subscribeDde，dde服务订阅方法[终了]');
+    }, this.ddeServ);
+    Log.system.info('stop，dde服务订阅方法[终了]');
   }
 
-  static unsubscribeDde = (serv: DdeServer) => {
-    Log.system.info('unsubscribeDde，dde服务退订方法[启动]');
+  stop() {
+    Log.system.info('stop，dde服务退订方法[启动]');
     // 资源释放
-    const stopDde = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
-    stopDde.invok((stopServ: DdeServer) => {
+    const stopTask = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
+    stopTask.invok((ddeServ: DdeServer) => {
       Log.system.info('启动定时DDE数据[退订服务]');
-      if (stopServ.isConnected()) {
-        stopServ.close();
-      }
+      ddeServ.close();
       // 删除定时任务
-      stopDde.reminder.cancel();
-    }, serv);
-    Log.system.info('unsubscribeDde，dde服务退订方法[终了]');
+      stopTask.reminder.cancel();
+    }, this.ddeServ);
+    Log.system.info('stop，dde服务退订方法[终了]');
   }
 
   /**
    * 注册定时自动登录事件
    */
-  static regAutoLogin() {
+  regAutoLogin() {
     assert(config, 'config required.');
     assert(config.account, 'config.account required.');
     Log.system.info('注册定时服务[乐天自动登录]');
     // 每天8点执行自动登录
-    const stopDde = new Scheduler('01 8 * * *'); // '01 8 * * *'
-    stopDde.invok((stopServ: DdeServer) => {
+    const autoLoginTask = new Scheduler('01 8 * * *'); // '01 8 * * *'
+    autoLoginTask.invok((stopServ: DdeServer) => {
       if (!Util.isTradeDate(new Date())) {
         return;
       }
