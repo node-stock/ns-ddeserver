@@ -4,10 +4,12 @@ import { Log } from 'ns-common';
 import { PubNub } from 'realstream';
 import * as numeral from 'numeral';
 import * as moment from 'moment';
+import { InfluxDB } from 'influx';
 
 const config = require('config');
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 const pubnub = new PubNub(config.pubnub);
+const influxDB = new InfluxDB();
 /**
   * @class
   * @classdesc DDE服务器
@@ -25,7 +27,7 @@ export class DdeServer {
     }
   }
   connect() {
-    db.init(config.store);
+    // db.init(config.store);
     this.conn = new Client(this.service);
     this.conn.connect();
     // 未连接上
@@ -50,7 +52,7 @@ export class DdeServer {
         if (ddeMsg.text && numeral(ddeMsg.text).value() !== 0) {
           // pubnub.publish('stock', ddeMsg);
           // 写入数据库
-          db.model.Dde.upsert(ddeMsg);
+          // db.model.Dde.upsert(ddeMsg);
         }
       } catch (err) {
         Log.system.error('订阅事件处理出错：', err.stack);
@@ -66,7 +68,7 @@ export class DdeServer {
 
   close() {
     Log.system.info(`关闭dde主题:${this.conn.topic()}。`);
-    db.close();
+    // db.close();
     this.conn.stopAdvise();
     this.conn.dispose();
   }
