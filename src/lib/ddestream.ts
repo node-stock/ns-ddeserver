@@ -16,7 +16,6 @@ export class DdeStream {
       symbols: config.ddeserv.symbols,
       items: BasePlan
     });
-
   }
 
   async start() {
@@ -25,14 +24,14 @@ export class DdeStream {
     // 如果为交易时间，直接启动dde服务
     if (Util.isTradeTime()) {
       Log.system.info('当前为交易时间，直接启动dde服务');
-      this.ddeServ.connect();
+      await this.ddeServ.connect();
       // 注册取消订阅事件
       this.stop();
     }
     Log.system.info('注册定时启动dde服务程序');
 
-    const startTask = new Scheduler('55 8 * * *'); // */3 * * * * *
-    startTask.invok((startServ: DdeServer) => {
+    const startTask = new Scheduler(config.ddeserv.startCron); // */3 * * * * *
+    startTask.invok(async (startServ: DdeServer) => {
       if (!Util.isTradeDate(new Date())) {
         Log.system.info('当前非交易日，不启动定时DDE数据订阅服务');
         return;
@@ -40,7 +39,7 @@ export class DdeStream {
 
       Log.system.info('启动定时DDE数据[订阅服务]');
       try {
-        this.ddeServ.connect();
+        await this.ddeServ.connect();
         // 注册取消订阅事件
         this.stop();
       } catch (err) {
@@ -51,7 +50,7 @@ export class DdeStream {
         Log.system.error(err.stack)
         if (startServ.isConnected()) {
           Log.system.info('发送异常，关闭DDE数据订阅服务');
-          startServ.close();
+          await startServ.close();
         }
       }
     }, this.ddeServ);
@@ -61,10 +60,10 @@ export class DdeStream {
   stop() {
     Log.system.info('stop，dde服务退订方法[启动]');
     // 资源释放
-    const stopTask = new Scheduler('01 15 * * *'); // '*/2 * * * * *'
-    stopTask.invok((ddeServ: DdeServer) => {
+    const stopTask = new Scheduler(config.ddeserv.endCron); // '*/2 * * * * *'
+    stopTask.invok(async (ddeServ: DdeServer) => {
       Log.system.info('启动定时DDE数据[退订服务]');
-      ddeServ.close();
+      await ddeServ.close();
       // 删除定时任务
       stopTask.reminder.cancel();
     }, this.ddeServ);

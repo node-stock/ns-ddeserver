@@ -2,12 +2,16 @@ import { Client, DdeType } from 'ts-dde';
 import { Store as db } from 'ns-store';
 import { Log } from 'ns-common';
 import { PubNub } from 'realstream';
+import { InfluxDB } from 'ns-influxdb';
+
 import * as numeral from 'numeral';
 import * as moment from 'moment';
 
 const config = require('config');
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
+db.init(config.store);
 const pubnub = new PubNub(config.pubnub);
+
 /**
   * @class
   * @classdesc DDE服务器
@@ -17,6 +21,7 @@ export class DdeServer {
   service: DdeType;
   // 订阅连接对象
   conn: Client;
+  influxdb: InfluxDB;
 
   constructor(opt: { symbols: string[], items: string[] }) {
     this.service = <DdeType>{ RSS: {} };
@@ -24,8 +29,19 @@ export class DdeServer {
       this.service.RSS[symbol + '.T'] = opt.items;
     }
   }
-  connect() {
-    db.init(config.store);
+
+  async initInflux() {
+
+    this.influxdb = new InfluxDB({
+      host: '127.0.0.1',
+      database: 'ns-stock'
+    });
+    await this.influxdb.initDB();
+    await this.influxdb.initCQ();
+  }
+
+  async connect() {
+    await this.initInflux();
     this.conn = new Client(this.service);
     this.conn.connect();
     // 未连接上
@@ -39,7 +55,7 @@ export class DdeServer {
       Log.system.info(`服务:${service},主题:${topic},断开连接！`);
     });
     // 订阅事件
-    this.conn.on('advise', (service: string, topic: string, item: string, text: string) => {
+    this.conn.on('advise', async (service: string, topic: string, item: string, text: string) => {
       try {
         const ddeMsg = {
           service, topic, item,
@@ -48,9 +64,15 @@ export class DdeServer {
         };
         console.log(ddeMsg);
         if (ddeMsg.text && numeral(ddeMsg.text).value() !== 0) {
+          if (ddeMsg.item === '現在値') {
+            await this.influxdb.putTick({
+              symbol: topic.split('.')[0],
+              price: numeral(ddeMsg.text).value()
+            });
+          }
           // pubnub.publish('stock', ddeMsg);
           // 写入数据库
-          db.model.Dde.upsert(ddeMsg);
+          await db.model.Dde.upsert(ddeMsg);
         }
       } catch (err) {
         Log.system.error('订阅事件处理出错：', err.stack);
@@ -64,9 +86,9 @@ export class DdeServer {
     return this.conn.isConnected();
   }
 
-  close() {
+  async close() {
     Log.system.info(`关闭dde主题:${this.conn.topic()}。`);
-    db.close();
+    await this.influxdb.dropCQ();
     this.conn.stopAdvise();
     this.conn.dispose();
   }
