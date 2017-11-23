@@ -3,6 +3,7 @@ import { Store as db } from 'ns-store';
 import { Log } from 'ns-common';
 import { PubNub } from 'realstream';
 import { InfluxDB } from 'ns-influxdb';
+import { Kapacitor } from 'ns-kapacitor';
 
 import * as numeral from 'numeral';
 import * as moment from 'moment';
@@ -22,6 +23,7 @@ export class DdeServer {
   // 订阅连接对象
   conn: Client;
   influxdb: InfluxDB;
+  kapacitor: Kapacitor;
 
   constructor(opt: { symbols: string[], items: string[] }) {
     this.service = <DdeType>{ RSS: {} };
@@ -40,8 +42,19 @@ export class DdeServer {
     await this.influxdb.initCQ();
   }
 
+  async initKapacitor() {
+    this.kapacitor = new Kapacitor({
+      host: '127.0.0.1',
+      db: 'ns-stock',
+      rp: 'autogen'
+    });
+    await this.kapacitor.initTemplate();
+    await this.kapacitor.initTask();
+  }
+
   async connect() {
     await this.initInflux();
+    await this.initKapacitor();
     this.conn = new Client(this.service);
     this.conn.connect();
     // 未连接上
