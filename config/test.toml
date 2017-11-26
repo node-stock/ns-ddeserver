@@ -44,3 +44,20 @@
   symbols = ["6553", "6664"]
   startCron = '* */1 * * * *' # '55 8 * * *'
   endCron = '* */2 * * * *' # '01 15 * * *'
+###
+### [influxdb]
+###
+### 时序列数据库相关配置
+###
+[influxdb]
+  host = '127.0.0.1'
+  database = 'ns-stock'
+###
+### [kapacitor]
+###
+### 数据监测相关配置
+###
+[kapacitor]
+  host = '127.0.0.1'
+  db = 'ns-stock'
+  rp = 'autogen'
