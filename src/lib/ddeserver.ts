@@ -34,20 +34,13 @@ export class DdeServer {
 
   async initInflux() {
 
-    this.influxdb = new InfluxDB({
-      host: '127.0.0.1',
-      database: 'ns-stock'
-    });
+    this.influxdb = new InfluxDB(config.influxdb);
     await this.influxdb.initDB();
     await this.influxdb.initCQ();
   }
 
   async initKapacitor() {
-    this.kapacitor = new Kapacitor({
-      host: '127.0.0.1',
-      db: 'ns-stock',
-      rp: 'autogen'
-    });
+    this.kapacitor = new Kapacitor(config.kapacitor);
     await this.kapacitor.initTemplate();
     await this.kapacitor.initTask();
   }
