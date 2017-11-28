@@ -1,6 +1,6 @@
 import { Client, DdeType } from 'ts-dde';
 import { Store as db } from 'ns-store';
-import { Log } from 'ns-common';
+import { Log, Util } from 'ns-common';
 import { PubNub } from 'realstream';
 import { InfluxDB } from 'ns-influxdb';
 import { Kapacitor } from 'ns-kapacitor';
@@ -70,7 +70,8 @@ export class DdeServer {
         };
         console.log(ddeMsg);
         if (ddeMsg.text && numeral(ddeMsg.text).value() !== 0) {
-          if (ddeMsg.item === '現在値') {
+          // 收集现在值 且 当前为交易时间
+          if (ddeMsg.item === '現在値' && Util.isTradeTime()) {
             await this.influxdb.putTick({
               symbol: topic.split('.')[0],
               price: numeral(ddeMsg.text).value()
