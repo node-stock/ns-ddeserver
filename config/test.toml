@@ -41,7 +41,7 @@
   filename = "MarketSpeed.exe"
 
 [ddeserv]
-  symbols = ["6553", "6664"]
+  symbols = ["162120019"]
   startCron = '* */1 * * * *' # '55 8 * * *'
   endCron = '* */2 * * * *' # '01 15 * * *'
 ###

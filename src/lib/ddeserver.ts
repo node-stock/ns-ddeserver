@@ -28,7 +28,7 @@ export class DdeServer {
   constructor(opt: { symbols: string[], items: string[] }) {
     this.service = <DdeType>{ RSS: {} };
     for (const symbol of opt.symbols) {
-      this.service.RSS[symbol + '.T'] = opt.items;
+      this.service.RSS[symbol.length > 4 ? symbol + '.OS' : symbol + '.T'] = opt.items;
     }
   }
 
