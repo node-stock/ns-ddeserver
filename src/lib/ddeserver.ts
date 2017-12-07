@@ -47,7 +47,7 @@ export class DdeServer {
 
   async connect() {
     await this.initInflux();
-    await this.initKapacitor();
+    // await this.initKapacitor();
     this.conn = new Client(this.service);
     this.conn.connect();
     // 未连接上
@@ -75,6 +75,13 @@ export class DdeServer {
             await this.influxdb.putTick({
               symbol: topic.split('.')[0],
               price: numeral(ddeMsg.text).value()
+            });
+          }
+          // 收集成交量 且 当前为交易时间
+          if (ddeMsg.item === '出来高' && Util.isTradeTime()) {
+            await this.influxdb.putTick({
+              symbol: topic.split('.')[0],
+              volume: numeral(ddeMsg.text).value()
             });
           }
           // pubnub.publish('stock', ddeMsg);

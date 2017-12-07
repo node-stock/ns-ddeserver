@@ -1,6 +1,6 @@
 {
   "name": "ns-ddeserver",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "node-stock dde server",
   "repository": {
     "type": "git",
@@ -18,32 +18,33 @@
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
-    "moment": "^2.19.1",
-    "mysql2": "^1.4.2",
+    "lokijs": "^1.5.1",
+    "moment": "^2.19.3",
+    "mysql2": "^1.5.1",
     "ns-common": "0.0.11",
-    "ns-influxdb": "0.0.4",
+    "ns-influxdb": "0.0.7",
     "ns-kapacitor": "0.0.2",
-    "ns-store": "0.0.27",
+    "ns-store": "0.0.32",
     "numeral": "^2.0.6",
     "rakuten-auto-login": "^0.1.1",
-    "realstream": "0.0.4",
+    "realstream": "0.0.5",
     "toml": "^2.3.3",
     "ts-dde": "^0.1.8"
   },
   "devDependencies": {
     "@types/config": "0.0.32",
-    "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.20",
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.0.56",
     "@types/numeral": "0.0.22",
     "@types/power-assert": "^1.4.29",
-    "config": "^1.26.1",
+    "config": "^1.28.1",
     "cross-env": "^5.1.1",
     "intelli-espower-loader": "^1.0.1",
-    "mocha": "^3.5.0",
+    "mocha": "^4.0.1",
     "power-assert": "^1.4.4",
     "rimraf": "^2.6.2",
     "ts-node": "^3.3.0",
-    "tslint": "^5.6.0",
-    "typescript": "^2.4.2"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
   }
 }
