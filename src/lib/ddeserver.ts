@@ -33,7 +33,6 @@ export class DdeServer {
   }
 
   async initInflux() {
-
     this.influxdb = new InfluxDB(config.influxdb);
     await this.influxdb.initDB();
     await this.influxdb.initCQ();
@@ -46,7 +45,11 @@ export class DdeServer {
   }
 
   async connect() {
-    await this.initInflux();
+    try {
+      await this.initInflux();
+    } catch (e) {
+      Log.system.info(`dropCQ:${e.stack}`);
+    }
     // await this.initKapacitor();
     this.conn = new Client(this.service);
     this.conn.connect();
@@ -101,8 +104,12 @@ export class DdeServer {
   }
 
   async close() {
-    Log.system.info(`关闭dde主题:${this.conn.topic()}。`);
-    await this.influxdb.dropCQ();
+    Log.system.info(`关闭dde主题:${this.conn ? this.conn.topic() : null}。`);
+    try {
+      await this.influxdb.dropCQ();
+    } catch (e) {
+      Log.system.info(`dropCQ:${e.stack}`);
+    }
     this.conn.stopAdvise();
     this.conn.dispose();
   }

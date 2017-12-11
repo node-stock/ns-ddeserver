@@ -8,7 +8,7 @@ const config = require('config');
 
 Log.init(Log.category.system, Log.level.ALL, 'ns-ddeserver');
 
-const testStart = async (done: any) => {
+const testStart = async () => {
 
   let server: DdeServer;
   try {
@@ -21,14 +21,10 @@ const testStart = async (done: any) => {
     if (err.Code === 16394) {
       Log.system.info('与服务器连接失败');
       assert(false);
-      done();
-      return;
     }
     Log.system.error(err.stack);
     assert(true);
-    done();
   }
-  done();
 };
 
 const testDdeStream = async () => {
@@ -40,8 +36,7 @@ const testDdeStream = async () => {
 
 describe('DDE服务测试', () => {
   it('测试是否启动成功', function () {
-    // testStart(done); // done();
-    //return testDdeStream();
-    return;
+    testStart(); // done();
+    // return testDdeStream();
   });
 });
