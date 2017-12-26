@@ -1,6 +1,6 @@
 {
   "name": "ns-ddeserver",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "node-stock dde server",
   "repository": {
     "type": "git",
@@ -21,11 +21,10 @@
     "lokijs": "^1.5.1",
     "moment": "^2.19.3",
     "mysql2": "^1.5.1",
-    "ns-common": "0.0.11",
-    "ns-influxdb": "0.0.8",
+    "ns-common": "0.0.12",
+    "ns-influxdb": "0.0.9",
     "ns-kapacitor": "0.0.2",
-    "ns-signal": "0.0.4",
-    "ns-store": "0.0.32",
+    "ns-store": "0.0.40",
     "numeral": "^2.0.6",
     "rakuten-auto-login": "^0.1.1",
     "realstream": "0.0.5",
